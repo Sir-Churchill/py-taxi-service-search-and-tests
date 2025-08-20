@@ -32,3 +32,26 @@ class PrivateViewTest(TestCase):
         self.assertEqual(
             list(response.context["manufacturer_list"]), list(manufacturers))
         self.assertTemplateUsed(response, "taxi/manufacturer_list.html")
+
+    def test_filter_manufacturer_by_name_matching(self):
+        ford = Manufacturer.objects.create(name="Ford", country="USA")
+        honda = Manufacturer.objects.create(name="Honda", country="Japan")
+
+        response = self.client.get(MANUFACTURER_URL, {"name": "ford"})
+        self.assertContains(response, ford.name)
+        self.assertNotContains(response, honda.name)
+
+    def test_filter_manufacturer_by_name_non_matching(self):
+        Manufacturer.objects.create(name="Ford", country="USA")
+
+        response = self.client.get(MANUFACTURER_URL, {"name": "zzz"})
+        self.assertNotContains(response, "Ford")
+        self.assertEqual(len(response.context["manufacturer_list"]), 0)
+
+    def test_filter_manufacturer_by_name_empty(self):
+        ford = Manufacturer.objects.create(name="Ford", country="USA")
+        honda = Manufacturer.objects.create(name="Honda", country="Japan")
+
+        response = self.client.get(MANUFACTURER_URL)
+        self.assertContains(response, ford.name)
+        self.assertContains(response, honda.name)
